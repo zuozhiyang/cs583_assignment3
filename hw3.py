@@ -1,16 +1,17 @@
-import pickle
-
-import numpy as np
 import argparse
-import imageio
 import logging
+import pickle
 import sys
+
+import imageio
+import numpy as np
 from scipy.ndimage.filters import convolve
 
 # Displacements are by default saved to a file after every run. Once you have confirmed your
 # LK code is working, you can load saved displacements to save time testing the
 # rest of the project.
 DEFAULT_DISPLACEMENTS_FILE = "final_displacements.pkl"
+
 
 def bilinear_interp(image, points):
     """Given an image and an array of row/col (Y/X) points, perform bilinear
@@ -19,26 +20,26 @@ def bilinear_interp(image, points):
     if points.ndim == 1:
         points = points[np.newaxis]
 
-    valid = np.all(points < [image.shape[0]-1, image.shape[1]-1], axis=-1)
+    valid = np.all(points < [image.shape[0] - 1, image.shape[1] - 1], axis=-1)
     valid *= np.all(points >= 0, axis=-1)
     valid = valid.astype(np.float32)
-    points = np.minimum(points, [image.shape[0]-2, image.shape[1]-2])
+    points = np.minimum(points, [image.shape[0] - 2, image.shape[1] - 2])
     points = np.maximum(points, 0)
 
     fpart, ipart = np.modf(points)
     tl = ipart.astype(np.int32)
-    br = tl+1
+    br = tl + 1
     tr = np.concatenate([tl[..., 0:1], br[..., 1:2]], axis=-1)
     bl = np.concatenate([br[..., 0:1], tl[..., 1:2]], axis=-1)
 
     b = fpart[..., 0:1]
     a = fpart[..., 1:2]
 
-    top = (1-a) * image[tl[..., 0], tl[..., 1]] + \
-        a * image[tr[..., 0], tr[..., 1]]
-    bot = (1-a) * image[bl[..., 0], bl[..., 1]] + \
-        a * image[br[..., 0], br[..., 1]]
-    return ((1-b) * top + b * bot) * valid[..., np.newaxis]
+    top = (1 - a) * image[tl[..., 0], tl[..., 1]] + \
+          a * image[tr[..., 0], tr[..., 1]]
+    bot = (1 - a) * image[bl[..., 0], bl[..., 1]] + \
+          a * image[br[..., 0], br[..., 1]]
+    return ((1 - b) * top + b * bot) * valid[..., np.newaxis]
 
 
 def translate(image, displacement):
@@ -46,7 +47,7 @@ def translate(image, displacement):
     image by the displacement. The shape of the output is the same as the
     input, with missing pixels filled in with zeros."""
     pts = np.mgrid[:image.shape[0], :image.shape[1]
-                   ].transpose(1, 2, 0).astype(np.float32)
+          ].transpose(1, 2, 0).astype(np.float32)
     pts -= displacement[::-1]
 
     return bilinear_interp(image, pts)
@@ -75,8 +76,8 @@ def gaussian_kernel(ksize=5):
     """
     Computes a 2-d gaussian kernel of size ksize and returns it.
     """
-    kernel = np.exp(-np.linspace(-(ksize//2), ksize//2, ksize)
-                    ** 2 / 2) / np.sqrt(2*np.pi)
+    kernel = np.exp(-np.linspace(-(ksize // 2), ksize // 2, ksize)
+                     ** 2 / 2) / np.sqrt(2 * np.pi)
     kernel = np.outer(kernel, kernel)
     kernel /= kernel.sum()
     return kernel
@@ -107,6 +108,7 @@ def lucas_kanade(H, I):
     # Solve for the displacement using linalg.solve
 
     # return the displacement and some intermediate data for unit testing..
+    displacement, AtA, Atb = 0
     return displacement, AtA, Atb
 
 
@@ -115,8 +117,9 @@ def iterative_lucas_kanade(H, I, steps):
     # Start with an initial displacement of 0 and accumulate displacements.
     disp = np.zeros((2,), np.float32)
     for i in range(steps):
+        print()
         # Translate the H image by the current displacement (using the translate function above)
-        
+
         # run Lucas Kanade and update the displacement estimate
 
     # Return the final displacement
@@ -132,19 +135,20 @@ def gaussian_pyramid(image, levels):
     Retuns:
         An array of images where each image is a blurred and shruken version of the first.
     """
-    
+
     # Compute a gaussian kernel using the gaussian_kernel function above. You can leave the size as default.
 
     # Add image to the the list as the first level
     pyr = [image]
     for level in range(1, levels):
+        print()
         # Convolve the previous image with the gussian kernel
-        
+
         # decimate the convolved image by downsampling the pixels in both dimensions.
         # Note: you can use numpy advanced indexing for this (i.e., ::2)
-        
+
         # add the sampled image to the list
-        
+
     return pyr
 
 
@@ -157,26 +161,22 @@ def pyramid_lucas_kanade(H, I, initial_d, levels, steps):
     initial_d = np.asarray(initial_d, dtype=np.float32)
 
     # Build Gaussian pyramids for the two images.
-    
 
     # Start with an initial displacement (scaled to the coarsest level of the
     # pyramid) and compute the updated displacement at each level using Lucas
     # Kanade.
-    disp = initial_d / 2.**(levels)
+    disp = initial_d / 2. ** (levels)
     for level in range(levels):
+        print()
         # Get the two images for this pyramid level.
-        
 
         # Scale the previous level's displacement and apply it to one of the
         # images via translation.
-        
 
         # Use the iterative Lucas Kanade method to compute a displacement
         # between the two images at this level.
-        
 
         # Update the displacement based on the one you just computed.
-        
 
     # Return the final displacement.
     return disp
@@ -194,7 +194,7 @@ def build_panorama(images, shape, displacements, initial_position, blend_width=1
     cur_pos = initial_position
     cp = np.round(cur_pos).astype(np.int32)
     panorama[cp[0]: cp[0] + image_height, cp[1]: cp[1] +
-             image_width] = translate(images[-1], displacements[-1])
+                                                 image_width] = translate(images[-1], displacements[-1])
 
     # Place the images at their final positions inside the panorama, blending
     # each image with the panorama in progress. Use a blending window with the
@@ -207,27 +207,28 @@ def build_panorama(images, shape, displacements, initial_position, blend_width=1
         blend_start_pano = int(cp[1] + blend_start)
 
         pano_region = panorama[cp[0]: cp[0] + image_height,
-                               blend_start_pano: blend_start_pano+blend_width]
-        new_region = images[i][:, blend_start: blend_start+blend_width]
+                      blend_start_pano: blend_start_pano + blend_width]
+        new_region = images[i][:, blend_start: blend_start + blend_width]
 
         mask = np.zeros((image_height, blend_width, 1), np.float32)
         mask[:] = np.linspace(0, 1, blend_width)[np.newaxis, :, np.newaxis]
         mask[np.all(new_region == 0, axis=2)] = 0
         mask[np.all(pano_region == 0, axis=2)] = 1
 
-        blended_region = mask * new_region + (1-mask) * pano_region
+        blended_region = mask * new_region + (1 - mask) * pano_region
 
         blended = images[i].copy("C")
-        blended[:, blend_start: blend_start+blend_width] = blended_region
-        blended[:, :blend_start] = panorama[cp[0] : cp[0] + image_height, cp[1]: blend_start_pano]
+        blended[:, blend_start: blend_start + blend_width] = blended_region
+        blended[:, :blend_start] = panorama[cp[0]: cp[0] + image_height, cp[1]: blend_start_pano]
 
         panorama[cp[0]: cp[0] + blended.shape[0],
-                 cp[1]: cp[1] + blended.shape[1]] = blended
+        cp[1]: cp[1] + blended.shape[1]] = blended
         cur_pos += -displacements[i][::-1]
         print("Placed %d." % i)
 
     # Return the finished panorama.
     return panorama
+
 
 def mosaic(images, initial_displacements, load_displacements_from):
     """Given a list of N images taken in clockwise order and corresponding
@@ -255,19 +256,19 @@ def mosaic(images, initial_displacements, load_displacements_from):
             print("Image %d:" % i,
                   initial_displacements[i], "->", final_displacements[i], "  ",
                   "%0.4f" % abs(
-                      (images[i] - translate(images[(i+1) % N], -initial_displacements[i]))).mean(), "->",
+                      (images[i] - translate(images[(i + 1) % N], -initial_displacements[i]))).mean(), "->",
                   "%0.4f" % abs(
-                      (images[i] - translate(images[(i+1) % N], -final_displacements[i]))).mean()
+                      (images[i] - translate(images[(i + 1) % N], -final_displacements[i]))).mean()
                   )
         print('Saving displacements to ' + DEFAULT_DISPLACEMENTS_FILE)
         pickle.dump(final_displacements, open(DEFAULT_DISPLACEMENTS_FILE, "wb"))
-
 
     # Use the final displacements and the images' shape compute the full
     # panorama shape and the starting position for the first panorama image.
 
     # Build the panorama.
     print("Building panorama...")
+    pano_height, pano_width, initial_pos = 0
     panorama = build_panorama(images, (pano_height, pano_width), final_displacements, initial_pos.copy())
     return panorama, final_displacements
 
@@ -307,7 +308,7 @@ if __name__ == "__main__":
     disps = np.hstack([xinit, yinit])
 
     images = [imageio.imread(fn)[:, :, :3].astype(
-        np.float32)/255. for fn in filenames]
+        np.float32) / 255. for fn in filenames]
 
     panorama, final_displacements = mosaic(images, disps, args.displacements)
 
