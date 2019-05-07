@@ -137,17 +137,20 @@ def gaussian_pyramid(image, levels):
     """
 
     # Compute a gaussian kernel using the gaussian_kernel function above. You can leave the size as default.
+    kernel = gaussian_kernel()
 
     # Add image to the the list as the first level
     pyr = [image]
     for level in range(1, levels):
-        print()
         # Convolve the previous image with the gussian kernel
+        convolved_img = convolve_img(pyr[level - 1], kernel)
 
         # decimate the convolved image by downsampling the pixels in both dimensions.
         # Note: you can use numpy advanced indexing for this (i.e., ::2)
+        convolved_img = convolved_img[::2, ::2]
 
         # add the sampled image to the list
+        pyr.append(convolved_img)
 
     return pyr
 
