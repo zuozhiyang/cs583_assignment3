@@ -1,7 +1,6 @@
 import argparse
 import logging
 import pickle
-import sys
 
 import imageio
 import numpy as np
@@ -143,14 +142,17 @@ def gaussian_pyramid(image, levels):
     pyr = [image]
     for level in range(1, levels):
         # Convolve the previous image with the gussian kernel
-        convolved_img = convolve_img(pyr[level - 1], kernel)
+        # convolved_img = convolve_img(pyr[level - 1], kernel)
 
         # decimate the convolved image by downsampling the pixels in both dimensions.
         # Note: you can use numpy advanced indexing for this (i.e., ::2)
-        convolved_img = convolved_img[::2, ::2]
+        # convolved_img = convolved_img[::2, ::2]
 
         # add the sampled image to the list
-        pyr.append(convolved_img)
+        # pyr.append(convolved_img)
+
+        # Condensed
+        pyr.append(convolve_img(pyr[level - 1], kernel)[::2, ::2])
 
     return pyr
 
