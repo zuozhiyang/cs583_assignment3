@@ -98,9 +98,15 @@ def lucas_kanade(H, I):
     # To achieve this, use a _normalized_ 3x3 sobel kernel and the convolve_img
     # function above. NOTE: since you're convolving the kernel, you need to 
     # multiply it by -1 to get the proper direction.
+    sobel_x = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]])
+    sobel_y = np.array([[-1, -2, -1], [0, 0, 0], [1, 2, 1]])
+
+    I_x = convolve_img(I, sobel_x)
+    I_y = convolve_img(I, sobel_y)
 
     # Compute the various products (Ixx, Ixy, Iyy, Ixt, Iyt) necessary to form
     # AtA. Apply the mask to each product.
+
 
     # Build the AtA matrix and Atb vector. You can use the .sum() function on numpy arrays to help.
 
