@@ -98,22 +98,34 @@ def lucas_kanade(H, I):
     # To achieve this, use a _normalized_ 3x3 sobel kernel and the convolve_img
     # function above. NOTE: since you're convolving the kernel, you need to 
     # multiply it by -1 to get the proper direction.
-    sobel_x = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]])
-    sobel_y = np.array([[-1, -2, -1], [0, 0, 0], [1, 2, 1]])
 
+    # divide by 8 to normalize
+    sobel_x = -np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]]) / 8.0
+    sobel_y = -np.array([[-1, -2, -1], [0, 0, 0], [1, 2, 1]]) / 8.0
+
+    # convolve x and y dimension
     I_x = convolve_img(I, sobel_x)
     I_y = convolve_img(I, sobel_y)
 
+    # surprisingly, this is just the difference between the images
+    I_t = H - I
+
     # Compute the various products (Ixx, Ixy, Iyy, Ixt, Iyt) necessary to form
     # AtA. Apply the mask to each product.
-
+    Ixx = (I_x * I_x) * mask
+    Ixy = (I_x * I_y) * mask
+    Iyy = (I_y * I_y) * mask
+    Ixt = (I_x * I_t) * mask
+    Iyt = (I_y * I_t) * mask
 
     # Build the AtA matrix and Atb vector. You can use the .sum() function on numpy arrays to help.
+    AtA = [[np.sum(Ixx), np.sum(Ixy)], [np.sum(Ixy), np.sum(Iyy)]]
+    Atb = [np.sum(Ixt), np.sum(Iyt)]
 
     # Solve for the displacement using linalg.solve
+    displacement = np.linalg.solve(AtA, Atb)
 
     # return the displacement and some intermediate data for unit testing..
-    displacement, AtA, Atb = 0
     return displacement, AtA, Atb
 
 
