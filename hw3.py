@@ -119,8 +119,8 @@ def lucas_kanade(H, I):
     Iyt = (I_y * I_t) * mask
 
     # Build the AtA matrix and Atb vector. You can use the .sum() function on numpy arrays to help.
-    AtA = [[np.sum(Ixx), np.sum(Ixy)], [np.sum(Ixy), np.sum(Iyy)]]
-    Atb = [np.sum(Ixt), np.sum(Iyt)]
+    AtA = np.array([[np.sum(Ixx), np.sum(Ixy)], [np.sum(Ixy), np.sum(Iyy)]])
+    Atb = np.array([np.sum(Ixt), np.sum(Iyt)])
 
     # Solve for the displacement using linalg.solve
     displacement = np.linalg.solve(AtA, Atb)
