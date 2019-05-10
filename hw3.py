@@ -132,10 +132,13 @@ def iterative_lucas_kanade(H, I, steps):
     disp = np.zeros((2,), np.float32)
     for i in range(steps):
         # Translate the H image by the current displacement (using the translate function above)
-        H_translated = translate(H, disp)
+        # H_translated = translate(H, disp)
 
         # run Lucas Kanade and update the displacement estimate
-        disp += lucas_kanade(H_translated, I)[0]
+        # disp += lucas_kanade(H_translated, I)[0]
+
+        # Condensed
+        disp += lucas_kanade(translate(H, disp), I)[0]
 
     # Return the final displacement
     return disp
@@ -182,8 +185,11 @@ def pyramid_lucas_kanade(H, I, initial_d, levels, steps):
     initial_d = np.asarray(initial_d, dtype=np.float32)
 
     # Build Gaussian pyramids for the two images.
-    H_pyr = gaussian_pyramid(H, levels)
-    I_pyr = gaussian_pyramid(I, levels)
+    # Flip em
+    H_pyr = np.flip(gaussian_pyramid(H, levels))
+    I_pyr = np.flip(gaussian_pyramid(I, levels))
+
+    print(iterative_lucas_kanade(H_pyr[2], I_pyr[2], steps))
 
     # Start with an initial displacement (scaled to the coarsest level of the
     # pyramid) and compute the updated displacement at each level using Lucas
@@ -194,13 +200,22 @@ def pyramid_lucas_kanade(H, I, initial_d, levels, steps):
         H_level = H_pyr[level]
         I_level = I_pyr[level]
 
+        print()
+        print(H_level.shape)
+        print(I_level.shape)
+
         # Scale the previous level's displacement and apply it to one of the
         # images via translation.
+        disp *= 2.0
+        H_translated = translate(H_level, disp)
 
         # Use the iterative Lucas Kanade method to compute a displacement
         # between the two images at this level.
+        new_disp = iterative_lucas_kanade(H_translated, I_level, steps)
+        print(disp, new_disp, disp + new_disp, disp - new_disp)
 
         # Update the displacement based on the one you just computed.
+        disp += new_disp
 
     # Return the final displacement.
     return disp
