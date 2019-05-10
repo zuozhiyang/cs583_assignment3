@@ -45,8 +45,7 @@ def translate(image, displacement):
     """Takes an image and a displacement of the form X,Y and translates the
     image by the displacement. The shape of the output is the same as the
     input, with missing pixels filled in with zeros."""
-    pts = np.mgrid[:image.shape[0], :image.shape[1]
-          ].transpose(1, 2, 0).astype(np.float32)
+    pts = np.mgrid[:image.shape[0], :image.shape[1]].transpose(1, 2, 0).astype(np.float32)
     pts -= displacement[::-1]
 
     return bilinear_interp(image, pts)
@@ -106,9 +105,7 @@ def lucas_kanade(H, I):
     # convolve x and y dimension
     I_x = convolve_img(I, sobel_x)
     I_y = convolve_img(I, sobel_y)
-
-    # surprisingly, this is just the difference between the images
-    I_t = H - I
+    I_t = I - H
 
     # Compute the various products (Ixx, Ixy, Iyy, Ixt, Iyt) necessary to form
     # AtA. Apply the mask to each product.
@@ -120,7 +117,7 @@ def lucas_kanade(H, I):
 
     # Build the AtA matrix and Atb vector. You can use the .sum() function on numpy arrays to help.
     AtA = np.array([[np.sum(Ixx), np.sum(Ixy)], [np.sum(Ixy), np.sum(Iyy)]])
-    Atb = np.array([np.sum(Ixt), np.sum(Iyt)])
+    Atb = -np.array([np.sum(Ixt), np.sum(Iyt)])
 
     # Solve for the displacement using linalg.solve
     displacement = np.linalg.solve(AtA, Atb)
@@ -134,10 +131,11 @@ def iterative_lucas_kanade(H, I, steps):
     # Start with an initial displacement of 0 and accumulate displacements.
     disp = np.zeros((2,), np.float32)
     for i in range(steps):
-        print()
         # Translate the H image by the current displacement (using the translate function above)
+        H_translated = translate(H, disp)
 
         # run Lucas Kanade and update the displacement estimate
+        disp += lucas_kanade(H_translated, I)[0]
 
     # Return the final displacement
     return disp
@@ -184,14 +182,17 @@ def pyramid_lucas_kanade(H, I, initial_d, levels, steps):
     initial_d = np.asarray(initial_d, dtype=np.float32)
 
     # Build Gaussian pyramids for the two images.
+    H_pyr = gaussian_pyramid(H, levels)
+    I_pyr = gaussian_pyramid(I, levels)
 
     # Start with an initial displacement (scaled to the coarsest level of the
     # pyramid) and compute the updated displacement at each level using Lucas
     # Kanade.
     disp = initial_d / 2. ** (levels)
     for level in range(levels):
-        print()
         # Get the two images for this pyramid level.
+        H_level = H_pyr[level]
+        I_level = I_pyr[level]
 
         # Scale the previous level's displacement and apply it to one of the
         # images via translation.
