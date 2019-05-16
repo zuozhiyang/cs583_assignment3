@@ -198,19 +198,15 @@ def pyramid_lucas_kanade(H, I, initial_d, levels, steps):
         H_level = H_pyr[level]
         I_level = I_pyr[level]
 
-        #print()
-        #print(H_level.shape)
-        #print(I_level.shape)
-
         # Scale the previous level's displacement and apply it to one of the
         # images via translation.
         disp *= 2.0
+
         H_translated = translate(H_level, disp)
 
         # Use the iterative Lucas Kanade method to compute a displacement
         # between the two images at this level.
         new_disp = iterative_lucas_kanade(H_translated, I_level, steps)
-        #print(disp, new_disp, disp + new_disp, disp - new_disp)
 
         # Update the displacement based on the one you just computed.
         disp += new_disp
@@ -306,19 +302,16 @@ def mosaic(images, initial_displacements, load_displacements_from):
         print('Saving displacements to ' + DEFAULT_DISPLACEMENTS_FILE)
         pickle.dump(final_displacements, open(DEFAULT_DISPLACEMENTS_FILE, "wb"))
 
-    # TODO: Use the final displacements and the images' shape compute the full
+    # Use the final displacements and the images' shape compute the full
     # panorama shape and the starting position for the first panorama image.
     sums = np.sum(final_displacements, axis=0)
-    print(sums)
-    print(images[0].shape[0])
-    print(N * images[0].shape[1])
 
+    # Height = image_height + total vertical drift
     pano_height = np.int(images[0].shape[0] + sums[1])
+    # Width = number of images * image_width - total horizontal drift
     pano_width = np.int(N * images[0].shape[1] + sums[0])
-    initial_pos = np.array([final_displacements[0][0], pano_height])
-
-    print("pano_height=", pano_height)
-    print("pano_width=", pano_width)
+    # Initial position = [total_height - image_height, 0]
+    initial_pos = np.array([pano_height - images[0].shape[0], 0], dtype=np.float)
 
     # Build the panorama.
     print("Building panorama...")
