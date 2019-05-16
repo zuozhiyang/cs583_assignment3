@@ -284,12 +284,9 @@ def mosaic(images, initial_displacements, load_displacements_from):
             # the end. A suggested number of levels and steps is 4 and 5
             # respectively. Make sure to append the displacement to
             # final_displacements so it gets saved to disk if desired.
-            H = images[i]
-            I = images[(i + 1) % N]
 
-            displacement = pyramid_lucas_kanade(H, I, initial_displacements[i], 4, 5)
-
-            final_displacements.append(displacement)
+            final_displacements.append(
+                pyramid_lucas_kanade(images[i], images[(i + 1) % N], initial_displacements[i], 4, 5))
 
             # Some debugging output to help diagnose errors.
             print("Image %d:" % i,
