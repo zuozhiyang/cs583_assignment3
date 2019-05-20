@@ -304,11 +304,11 @@ def mosaic(images, initial_displacements, load_displacements_from):
     sums = np.sum(final_displacements, axis=0)
 
     # Height = image_height + total vertical drift
-    pano_height = np.int(images[0].shape[0] + sums[1])
+    pano_height = np.int(images[0].shape[0] + np.abs(sums[1]) + 10)
     # Width = number of images * image_width - total horizontal drift
-    pano_width = np.int(N * images[0].shape[1] + sums[0])
+    pano_width = np.int(N * images[0].shape[1] - np.abs(sums[0]))
     # Initial position = [total_height - image_height, 0]
-    initial_pos = np.array([pano_height - images[0].shape[0], 0], dtype=np.float)
+    initial_pos = np.array([pano_height - images[0].shape[0] - 2, 0], dtype=np.float)
 
     # Build the panorama.
     print("Building panorama...")
